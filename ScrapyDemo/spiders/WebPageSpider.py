@@ -34,7 +34,3 @@ class WebPageSpider(scrapy.spiders.Spider):
         articleItem["create_date"] = create_date
         articleItem["img_url"] = img_url
         yield articleItem
-
-
-
-
