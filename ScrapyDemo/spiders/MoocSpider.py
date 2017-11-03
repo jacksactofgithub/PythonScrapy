@@ -9,6 +9,7 @@ class MoocSpider(scrapy.spiders.Spider):
     def parse(self,response):
         item = CourseItem()
         boxs = response.xpath('//div[@class="course-card-container"]/a[@target="_blank"]')
+        print(type(boxs))
         for box in boxs:
             #对每个课程的box解析 得到课程标题简介等信息
             item['url'] = 'http://www.imooc.com' + box.xpath('.//@href').extract()[0]
