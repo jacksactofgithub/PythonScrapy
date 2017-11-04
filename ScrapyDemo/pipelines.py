@@ -6,6 +6,7 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
 import json
+import os
 
 class ScrapydemoPipeline(object):
     def process_item(self, item, spider):
@@ -13,7 +14,11 @@ class ScrapydemoPipeline(object):
 
 class MoocSpiderPipeline(object):
     def __init__(self):#__init__方法在类被实例化的时候自动调用，用于初始化对象
-        self.file = open('F:\data.json','w',encoding='utf-8')
+        if os.path.exists('E:\data.json'):
+            self.file = open('E:\data.json','w',encoding='utf-8')
+        else:
+            self.file = open('E:\data.json', 'w', encoding='utf-8')
+            print("file not fund")
         print("pipeline init")
 
     def process_item(self,item,spider):
@@ -32,5 +37,5 @@ class MoocSpiderPipeline(object):
 
 class MysqlPipilin(object):
     def __init__(self):
-        self.conn =pymysql.connect(host='192.168.1.19',port=3306,user='root',passwd='123456',db='article_spider',use_unicode=True, charset="utf8")
+        #self.conn =pymysql.connect(host='192.168.1.19',port=3306,user='root',passwd='123456',db='article_spider',use_unicode=True, charset="utf8")
         self.cursor = self.conn.cursor()
