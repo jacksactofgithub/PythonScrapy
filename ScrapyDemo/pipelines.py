@@ -19,7 +19,6 @@ class MoocSpiderPipeline(object):
         else:
             self.file = open('E:\data.json', 'w', encoding='utf-8')
             print("file not fund")
-        print("pipeline init")
 
     def process_item(self,item,spider):
         #dumps将dict转换为str格式 dict(item)将item转换为dict类型
