@@ -69,13 +69,24 @@ class ZhihuSpider(scrapy.spiders.Spider):
         # 首先检查是否登录成功,登录成功后请求目标url并缴费downloadImg函数处理
         if self.check_login(response):
             for url in self.start_urls:
-                yield scrapy.Request(url=url, headers=self.header, dont_filter=True,callback=self.downloadImg)
+                for i in range[20]:
+                    data={}
+                    data['sort_by'] = 'default'
+                    data['include'] = 'data[*].is_normal,is_sticky,collapsed_by,suggest_edit,comment_count,' \
+                                      'can_comment,content,editable_content,voteup_count,reshipment_settings,' \
+                                      'comment_permission,mark_infos,created_time,updated_time,' \
+                                      'relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,' \
+                                      'upvoted_followees;data[*].author.badge[?(type=best_answerer)].topics'
+                    data['limit'] = 20
+                    data['offset'] = 3 + 20 * i
+                    yield scrapy.Request(url=url, headers=self.header, data=data, meta={"index":i},
+                                         dont_filter=True, callback=self.downloadImg)
 
     def downloadImg(self,response):
         images = response.xpath('//img[@class="origin_image zh-lightbox-thumb lazy"]/@data-actualsrc').extract()
         i=1
         for img in images:
-            request.urlretrieve(img,'E:\pythondl\pic%s.jpg' % i)
+            request.urlretrieve(img,'E:\pythondl\%dpic%s.jpg' % (response.meta['index'],i))
             i+=i
         pass
 
