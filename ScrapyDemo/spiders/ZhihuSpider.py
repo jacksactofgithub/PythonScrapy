@@ -79,7 +79,7 @@ class ZhihuSpider(scrapy.spiders.Spider):
                                       'upvoted_followees;data[*].author.badge[?(type=best_answerer)].topics'
                     data['limit'] = 20
                     data['offset'] = 3 + 20 * i
-                    yield scrapy.Request(url=url, headers=self.header, data=data, meta={"index":i},
+                    yield scrapy.Request(url=url, headers=self.header, data=data, meta={"index":str(i)},
                                          dont_filter=True, callback=self.downloadImg)
 
     def downloadImg(self,response):
