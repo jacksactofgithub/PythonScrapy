@@ -30,9 +30,6 @@ class ZhihuSpider(scrapy.spiders.Spider):
         'User-Agent': Agent,
     }
 
-    def parse(self, response):
-        # 主页爬取的具体内容
-        pass
 
     def start_requests(self):
         #t = str(int(time.time() * 1001))
@@ -51,14 +48,19 @@ class ZhihuSpider(scrapy.spiders.Spider):
             im.close()
         except:
             print(u'请到 %s 目录找到captcha.jpg 手动输入' % os.path.abspath('captcha.jpg'))
+        #从控制台手动输入验证码
         captcha = input("please input the captcha\n>")
-        #将获取到的验证码放到meta中
-        return scrapy.FormRequest(url='https://www.zhihu.com/#signin', headers=self.header,callback=self.login, meta={'captcha': captcha})
+        #请求知乎登录页面#signin;获取将获取到的验证码放到meta中
+        return scrapy.FormRequest(url='https://www.zhihu.com/#signin', headers=self.header,callback=self.login,
+                                  meta={'captcha': captcha})
 
     def login(self, response):
+        #登录页面body中有登录表单需要提交的_xsrf参数的值,用xpath解析response得到_xsrf的值
         xsrf = response.xpath("//input[@name='_xsrf']/@value").extract_first()
         if xsrf is None:
             return ''
+        #登录表单的post地址,captcha为上一步请求到的验证码的值;服务器端在爬虫请求验证码的时候把验证码存储在session中,爬虫post登录
+        #时比较提交的表单中的验证码值和session中的值是否相等
         post_url = 'https://www.zhihu.com/login/email'
         post_data = {
             "_xsrf": xsrf,
@@ -66,17 +68,27 @@ class ZhihuSpider(scrapy.spiders.Spider):
             "password": 'ls1995429',
             "captcha": response.meta['captcha']
         }
-        return [scrapy.FormRequest(url=post_url, formdata=post_data, headers=self.header, callback=self.check_login)]
+        return [scrapy.FormRequest(url=post_url, formdata=post_data, headers=self.header, callback=self.parse)]
 
     # 验证返回是否成功
     def check_login(self, response):
         js = json.loads(response.text)
         if 'msg' in js and js['msg'] == '登录成功':
             print("登录成功")
-            for url in self.start_urls:
-                yield scrapy.Request(url=url, headers=self.header, dont_filter=True)
+            return True
+            # for url in self.start_urls:
+            #     yield scrapy.Request(url=url, headers=self.header, dont_filter=True)
         else:
             print("登录失败")
+            return False
+
+    def parse(self, response):
+        # 首先检查是否登录成功
+        if self.check_login(self,response):
+            print("successs")
+        else:
+            print("fail")
+
 
 
 """
