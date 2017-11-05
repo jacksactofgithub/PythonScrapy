@@ -1,38 +1,23 @@
-
+__author__ = 'liushuo'
 import scrapy
-# from scrapy.http import FormRequest
-#import time
+from scrapy.http import FormRequest
 import os
 import json
 from PIL import Image
+from urllib import request
 
 
 class ZhihuSpider(scrapy.spiders.Spider):
     name = "ZhihuSpider"
-    """
-    def start_requests(self):
-        return[
-            FormRequest(
-                "https://www.zhihu.com/",
-                formdata={"_xsrf":"33323565666564622d353939342d346139312d383631652d316239303639643166343733",
-                          "password": "ls1995429",
-                          "captcha_type":"cn",
-                          "email":"2653909025@qq.com"
-                          }
-            )
-        ]
-    """
     allowed_domains = ['www.zhihu.com']
-    start_urls = ['https://www.zhihu.com/question/']
+    start_urls = ['https://www.zhihu.com/question/37709992']#长得好看但是没有男朋友
     Agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.9 Safari/537.36'
-
     header = {
         'User-Agent': Agent,
     }
 
 
     def start_requests(self):
-        #t = str(int(time.time() * 1001))
         # 知乎登录验证码获取地址 从请求验证码开始知乎为爬虫请求生成一个session 用户请求的验证码放到session中(猜测)
         #captcha_url = 'https://www.zhihu.com/captcha.gif?r=' + t + '&type=login&lang=en'
         captcha_url = 'https://www.zhihu.com/captcha.gif?r=15000778515&type=login&lang=en'
@@ -68,29 +53,44 @@ class ZhihuSpider(scrapy.spiders.Spider):
             "password": 'ls1995429',
             "captcha": response.meta['captcha']
         }
-        return [scrapy.FormRequest(url=post_url, formdata=post_data, headers=self.header, callback=self.parse)]
+        return [FormRequest(url=post_url, formdata=post_data, headers=self.header, callback=self.parse)]
 
     # 验证返回是否成功
     def check_login(self, response):
         js = json.loads(response.text)
         if 'msg' in js and js['msg'] == '登录成功':
-            print("登录成功")
+            print(js['msg'])
             return True
-            # for url in self.start_urls:
-            #     yield scrapy.Request(url=url, headers=self.header, dont_filter=True)
         else:
-            print("登录失败")
+            print(js['msg'])
             return False
 
     def parse(self, response):
-        # 首先检查是否登录成功
-        if self.check_login(self,response):
-            print("successs")
-        else:
-            print("fail")
+        # 首先检查是否登录成功,登录成功后请求目标url并缴费downloadImg函数处理
+        if self.check_login(response):
+            for url in self.start_urls:
+                yield scrapy.Request(url=url, headers=self.header, dont_filter=True,callback=self.downloadImg)
 
+    def downloadImg(self,response):
+        images = response.xpath('//img[@class="origin_image zh-lightbox-thumb lazy"]/@data-actualsrc').extract()
+        i=1
+        for img in images:
+            request.urlretrieve(img,'E:\pythondl\pic%s.jpg' % i)
+            i+=i
+        pass
 
 
 """
-User-Agent:Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.9 Safari/537.36
+知乎登录的form表单
+_xsrf:33323565666564622d353939342d346139312d383631652d316239303639643166343733
+password:**********
+captcha_type:en
+email:*************
+
+登录请求的response
+data:{password: "请输入 6-128 位的密码"}
+password:"请输入 6-128 位的密码"
+errcode:100004
+msg:"请输入 6-128 位的密码"
+r:1
 """
