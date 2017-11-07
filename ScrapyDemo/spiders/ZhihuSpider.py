@@ -11,18 +11,17 @@ import urllib
 
 class ZhihuSpider(scrapy.spiders.Spider):
     name = "ZhihuSpider"
-    allowed_domains = ['www.zhihu.labs']
-    start_urls = ['https:/www.zhihu.labs/api/v4/questions/37709992/answers?']#长得好看但是没有男朋友
+    allowed_domains = ['www.zhihu.com']
+    start_urls = ['https:/www.zhihu.com/api/v4/questions/37709992/answers?']#长得好看但是没有男朋友
     Agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.9 Safari/537.36'
     header = {
         'User-Agent': Agent,
-        'Host':'www.zhihu.com'
+        'host':'www.zhihu.com'
     }
-    index = 0
 
     def start_requests(self):
         # 知乎登录验证码获取地址 从请求验证码开始知乎为爬虫请求生成一个session 用户请求的验证码放到session中(猜测)
-        captcha_url = 'https://www.zhihu.labs/captcha.gif?r=15000778515&type=login&lang=en'
+        captcha_url = 'https://www.zhihu.com/captcha.gif?r=15000778515&type=login&lang=en'
         return [scrapy.Request(url=captcha_url, headers=self.header, callback=self.parser_captcha)]
 
     def parser_captcha(self, response):
@@ -36,7 +35,7 @@ class ZhihuSpider(scrapy.spiders.Spider):
         #从控制台手动输入验证码
         captcha = input("请输入图中的验证码\n>")
         #请求知乎登录页面#signin;获取将获取到的验证码放到meta中
-        return scrapy.FormRequest(url='https://www.zhihu.labs/#signin', headers=self.header,callback=self.login,
+        return scrapy.FormRequest(url='https://www.zhihu.com/#signin', headers=self.header,callback=self.login,
                                   meta={'captcha': captcha})
 
     def login(self, response):
@@ -46,10 +45,10 @@ class ZhihuSpider(scrapy.spiders.Spider):
             return ''
         #登录表单的post地址,captcha为上一步请求到的验证码的值;服务器端在爬虫请求验证码的时候把验证码存储在session中,爬虫post登录
         #时比较提交的表单中的验证码值和session中的值是否相等
-        post_url = 'https://www.zhihu.labs/login/email'
+        post_url = 'https://www.zhihu.com/login/email'
         post_data = {
             "_xsrf": xsrf,
-            "email": '2653909025@qq.labs',
+            "email": '2653909025@qq.com',
             "password": 'ls1995429',
             "captcha": response.meta['captcha']
         }
@@ -88,6 +87,8 @@ class ZhihuSpider(scrapy.spiders.Spider):
 
                     req = urllib.request.Request(url,data,self.header,method='GET')
                     res = urllib.request.urlopen(req)
+                    js = json.load(res.read().decode())
+                    print(js['paging']['totals'])
 
 
     def downloadImg(self,response):
