@@ -1,23 +1,26 @@
 __author__ = 'liushuo'
 import scrapy
 from scrapy.http import FormRequest
+from scrapy.http import Request
 import json
 from PIL import Image
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError
 from twisted.internet.error import TimeoutError, TCPTimedOutError
 from urllib.parse import urlencode
+import re
 import urllib
 
 class ZhihuSpider(scrapy.spiders.Spider):
     name = "ZhihuSpider"
     allowed_domains = ['www.zhihu.com']
-    start_urls = ['https:/www.zhihu.com/api/v4/questions/37709992/answers?']#长得好看但是没有男朋友
+    start_urls = ['https://www.zhihu.com/api/v4/questions/37709992/answers?']#长得好看但是没有男朋友 开始https后少了一个/
     Agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.9 Safari/537.36'
     header = {
         'User-Agent': Agent,
         'host':'www.zhihu.com'
     }
+    picIndex = 0
     xsrf = ''
 
     def start_requests(self):
@@ -68,7 +71,7 @@ class ZhihuSpider(scrapy.spiders.Spider):
     def parse(self, response):
         # 首先检查是否登录成功,登录成功后请求目标url并缴费downloadImg函数处理
         if self.check_login(response):
-            self.header['_xsfr'] = self.xsrf
+            #self.header['_xsfr'] = self.xsrf
             for url in self.start_urls:
                 for i in range(0,20):
                     form_data={
@@ -85,21 +88,34 @@ class ZhihuSpider(scrapy.spiders.Spider):
                     }
                     data = urlencode(form_data)
                     curl = str(url+data)
-                    print(curl)
+                    #print(curl)
                     #data = str(urlencode(form_data).encode('utf-8'))
-                    yield scrapy.Request(url=curl, headers=self.header, method='GET', callback=self.downloadImg)
-                    #yield scrapy.Request(url=url,headers=self.header, callback=self.downloadImg)
-
-
-                    req = urllib.request.Request(url,data,self.header,method='GET')
-                    res = urllib.request.urlopen(req)
-                    js = json.load(res.read().decode())
-                    print(js['paging']['totals'])
+                    yield Request(url=curl, headers=self.header, method='GET', callback=self.downloadImg)
 
 
     def downloadImg(self,response):
-        js = json.loads(response.text)
-        print(js['paging']['totals'])
+        reg = r'data-original=\\?"https?://.{0,100}?\.jpg\\?"'    #正则表达式，得到图片地址src data-original=\"https://pic1.zhimg.com/df7507ed69a54b936381257ccdca0f88_r.jpg\"
+        imgre = re.compile(reg)
+        imglist = re.findall(imgre,response.text)
+
+        for imgurl in imglist:
+            imgurl = imgurl.replace('data-original=','')
+            imgurl = imgurl.replace(r'\"','')
+            print(imgurl)
+            if (self.picIndex % 2) == 0:
+                urllib.request.urlretrieve(imgurl,'E:\pythondl\%s.jpg' % self.picIndex)
+            self.picIndex += 1
+
+        reg = r'src=\\?"https?://.{0,100}?\.jpg\\?"'
+        imgre = re.compile(reg)
+        imglist = re.findall(imgre,response.text)
+        for imgurl in imglist:
+            imgurl = imgurl.replace('data-original=','')
+            imgurl = imgurl.replace(r'\"','')
+            print(imgurl)
+            if (self.picIndex % 2) == 0:
+                urllib.request.urlretrieve(imgurl,'E:\pythondl\%s.jpg' % self.picIndex)
+            self.picIndex += 1
         """
         images = response.xpath('//img[@class="origin_image zh-lightbox-thumb lazy"]/@data-actualsrc').extract()
         i=1
@@ -141,6 +157,4 @@ msg:"请输入 6-128 位的密码"
 r:1
 
 明日todo:设置登录cookie; 抓取知乎问题下的所有回答
-http://blog.csdn.net/github_38196368/article/details/72755669
 """
-#include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,upvoted_followees;data[*].mark_infos[*].url;data[*].author.follower_count,badge[?(type=best_answerer)].topics
