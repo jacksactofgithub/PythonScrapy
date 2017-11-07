@@ -4,7 +4,7 @@ from ScrapyDemo.items import CourseItem
 
 class MoocSpider(scrapy.spiders.Spider):
     name = "MoocSpider"
-    start_urls = ["http://www.imooc.labs/course/list"]
+    start_urls = ["http://www.imooc.com/course/list"]
 
     def parse(self,response):
         item = CourseItem()
@@ -12,7 +12,7 @@ class MoocSpider(scrapy.spiders.Spider):
         print(type(boxs))
         for box in boxs:
             #对每个课程的box解析 得到课程标题简介等信息
-            item['url'] = 'http://www.imooc.labs' + box.xpath('.//@href').extract()[0]
+            item['url'] = 'http://www.imooc.com' + box.xpath('.//@href').extract()[0]
             item['image_url'] = 'http'+box.xpath('.//@src').extract()[0]
             item['title'] = box.xpath('.//h3[@class="course-card-name"]/text()').extract()[0].strip()
             item['student'] = box.xpath('.//div[@class = "course-card-info"]/span/text()').extract()[1].strip()#[:-3]

@@ -16,6 +16,7 @@ class ZhihuSpider(scrapy.spiders.Spider):
     Agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.9 Safari/537.36'
     header = {
         'User-Agent': Agent,
+        'Host':'www.zhihu.com'
     }
     index = 0
 

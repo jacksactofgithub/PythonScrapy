@@ -5,7 +5,7 @@ import scrapy
 
 class scrapydemo(scrapy.spiders.Spider):
     name = "scrapydemo"#必须定义name
-    start_urls = ["https://list.jd.labs/list.html?cat=9987,653,655"]#定义要抓取的网页url 京东手机分类
+    start_urls = ["https://list.jd.com/list.html?cat=9987,653,655"]#定义要抓取的网页url 京东手机分类
 
     def parse(self,response):#必须实现parse方法 scrapy源码中默认callback函数的函数名
         """
@@ -14,7 +14,7 @@ class scrapydemo(scrapy.spiders.Spider):
         unicode_body = response.body_as_unicode()#返回的html unicode编码
 
         num_pages = int(response.xpath('//div[contains(@class, "p-name")]/text()').extract_first())
-        base_url = "http://www.allitebooks.labs/security/page/{0}/"
+        base_url = "http://www.allitebooks.com/security/page/{0}/"
         for page in range(1, num_pages):
             yield scrapy.Request(base_url.format(page), dont_filter=True, callback=self.parse_page)
         for i in range(len(phonenames)):

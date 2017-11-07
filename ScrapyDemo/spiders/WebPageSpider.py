@@ -5,7 +5,7 @@ from ScrapyDemo.items import ArticleItem
 
 class WebPageSpider(scrapy.spiders.Spider):
     name = "WebPageSpider"
-    start_urls = ["http://blog.jobbole.labs/all-posts/"]
+    start_urls = ["http://blog.jobbole.com/all-posts/"]
 
     def parse(self,response):
         articles = response.xpath('//div[@class="post floated-thumb"]/div[@class="post-thumb"]')
