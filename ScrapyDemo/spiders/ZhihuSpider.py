@@ -18,6 +18,7 @@ class ZhihuSpider(scrapy.spiders.Spider):
         'User-Agent': Agent,
         'host':'www.zhihu.com'
     }
+    xsrf = ''
 
     def start_requests(self):
         # 知乎登录验证码获取地址 从请求验证码开始知乎为爬虫请求生成一个session 用户请求的验证码放到session中(猜测)
@@ -40,14 +41,14 @@ class ZhihuSpider(scrapy.spiders.Spider):
 
     def login(self, response):
         #登录页面body中有登录表单需要提交的_xsrf参数的值,用xpath解析response得到_xsrf的值
-        xsrf = response.xpath("//input[@name='_xsrf']/@value").extract_first()
-        if xsrf is None:
+        self.xsrf = response.xpath("//input[@name='_xsrf']/@value").extract_first()
+        if self.xsrf is None:
             return ''
         #登录表单的post地址,captcha为上一步请求到的验证码的值;服务器端在爬虫请求验证码的时候把验证码存储在session中,爬虫post登录
         #时比较提交的表单中的验证码值和session中的值是否相等
         post_url = 'https://www.zhihu.com/login/email'
         post_data = {
-            "_xsrf": xsrf,
+            "_xsrf": self.xsrf,
             "email": '2653909025@qq.com',
             "password": 'ls1995429',
             "captcha": response.meta['captcha']
@@ -67,6 +68,7 @@ class ZhihuSpider(scrapy.spiders.Spider):
     def parse(self, response):
         # 首先检查是否登录成功,登录成功后请求目标url并缴费downloadImg函数处理
         if self.check_login(response):
+            self.header['_xsfr'] = self.xsrf
             for url in self.start_urls:
                 for i in range(0,20):
                     form_data={
@@ -81,9 +83,13 @@ class ZhihuSpider(scrapy.spiders.Spider):
                         'offset':str(3 + 20 * i),
                         'sort_by':'default'
                     }
-                    data = str(urlencode(form_data).encode('utf-8'))
-                    #yield scrapy.Request(url=url+data, headers=self.header, method='GET', callback=self.downloadImg)
+                    data = urlencode(form_data)
+                    curl = str(url+data)
+                    print(curl)
+                    #data = str(urlencode(form_data).encode('utf-8'))
+                    yield scrapy.Request(url=curl, headers=self.header, method='GET', callback=self.downloadImg)
                     #yield scrapy.Request(url=url,headers=self.header, callback=self.downloadImg)
+
 
                     req = urllib.request.Request(url,data,self.header,method='GET')
                     res = urllib.request.urlopen(req)
