@@ -32,3 +32,8 @@ class ArticleItem(scrapy.Item):
     url =scrapy.Field()
     create_date = scrapy.Field()
     img_url = scrapy.Field()
+
+class TwoColorItem(scrapy.Item):
+    red = scrapy.Field()
+    blue = scrapy.Field()
+    date = scrapy.Field()
